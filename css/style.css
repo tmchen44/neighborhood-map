@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto');
+
+* {
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+}
+
+p {
+    font-weight: 200;
+}
+
+body {
+    margin: 0;
+    width: 100vw;
+    display: flex;
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background: #888;
+    margin: 15px 0 15px 0;
+}
+
+/*
+ *  Nav menu
+ */
+
+nav {
+    background-color: #f7f7f7;
+    height: 100vh;
+    width: 350px;
+    z-index: 1;
+    transform: translate(-350px, 0);
+    transition: transform 0.5s ease;
+    position: absolute;
+    box-shadow: 1px 0 5px rgba(0, 0, 0, 0.4);
+    padding: 0 15px 10px 15px;
+}
+
+.open {
+    transform: translate(0, 0);
+}
+
+#closenav {
+    font-size: 42px;
+    position: absolute;
+    right: 0px;
+    margin: 0 20px 0 0;
+    color: #a0a0a0;
+}
+
+#closenav:hover {
+    cursor: pointer;
+    color: red;
+}
+
+nav .button {
+    font-size: 1em;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+#search {
+    width: 100%;
+    top: 60px;
+    margin-top: 60px;
+}
+
+#search p {
+    padding-top: 15px;
+    margin: 0 0 7px 0;
+}
+
+#search-text {
+    font-size: 1em;
+    width: 100%;
+    padding: 7px 5px;
+    border: 1px solid gray;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+#search .submit {
+    background-color: #3f9cff;
+    color: white;
+    border: 2px solid #3f9cff;
+    margin-right: 5px;
+}
+
+#search .submit:hover {
+    background-color: #f7f7f7;
+    color: #3f9cff;
+}
+
+#search .clear {
+    background-color: #c4c4c4;
+    color: white;
+    border: 2px solid #c4c4c4;
+}
+
+#search .clear:hover {
+    background-color: #f7f7f7;
+    color: #c4c4c4;
+}
+
+
+/*
+ *  Main area
+ */
+
+main {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+}
+
+header {
+    height: 60px;
+    width: 100%;
+    flex: 0 0 auto;
+    background-color: #4c8ef7;
+    display: inline-flex;
+    align-items: center;
+}
+
+#opennav {
+    font-size: 1.5em;
+    color: white;
+    margin-left: 20px;
+}
+
+#opennav:hover {
+    cursor: pointer;
+}
+
+#map {
+    width: 100%;
+    flex: 1 1 auto;
+}
