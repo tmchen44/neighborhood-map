@@ -144,3 +144,15 @@ header {
 #infoWindow {
     width: 300px;
 }
+
+.rating {
+    height: 40px;
+    line-height: 40px;
+    width: 40px;
+    font-size: 1.2em;
+    font-weight: bold;
+    border-radius: 50%;
+    text-align: center;
+    vertical-align: middle;
+    color: white;
+}

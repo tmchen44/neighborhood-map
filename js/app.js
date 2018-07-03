@@ -85,16 +85,16 @@ function getPlaceDetails(marker, infoWindow) {
     var service = new google.maps.places.PlacesService(map);
     // Callback from Places Details Service
     function googlePlacesCallback(place, status) {
-        var googleInfo = {};
+        var placeInfo = { Google: {}, Foursquare: {} };
         if (status === google.maps.places.PlacesServiceStatus.OK) {
             marker.details.address = place.formatted_address;
-            googleInfo = place;
-            googleInfo.successful = true;
+            placeInfo.Google.info = place;
+            placeInfo.Google.success = true;
         } else {
-            googleInfo.successful = false;
+            placeInfo.Google.success = false;
         }
-        // Call Foursquare Venue Search Service
-        foursquareSearch(marker, googleInfo);
+        // Call Foursquare Venue Search
+        foursquareSearch(marker, placeInfo);
     }
     // Call to Google Place Details service
     service.getDetails({
@@ -102,8 +102,9 @@ function getPlaceDetails(marker, infoWindow) {
     }, googlePlacesCallback);
 }
 
-function foursquareSearch(marker, googleInfo) {
-    // Define search parameters for call to Foursquare Venue Search
+function foursquareSearch(marker, placeInfo) {
+    // Define search parameters for Foursquare Venue Search
+    var result;
     var search_params = {
         query: marker.details.name,
         client_id: CLIENT_ID,
@@ -117,95 +118,97 @@ function foursquareSearch(marker, googleInfo) {
         search_params.radius = 50;
     }
     // AJAX call to Foursquare Venue Search
-    var result = {}
     $.ajax({
         method: 'GET',
         dataType: "json",
         url: "https://api.foursquare.com/v2/venues/search",
         data: search_params,
         success: function(results) {
-            if (results.meta.code == 200) {
-                // Populate info window with Google and Yelp data
-                populateInfoWindow(googleInfo, foursquareInfo, marker);
-                getFoursquareDetails(results, googleInfo);
+            if (results.meta.code == 200 && results.response.venues.length > 0) {
+                placeInfo.Foursquare.success = true;
+                getFoursquareDetails(marker, results, placeInfo);
             } else {
-                result = { successful: false };
+                placeInfo.Foursquare.success = false;
+                populateInfoWindow(marker, placeInfo);
             }
         },
         error: function() {
-            result = { successful: false };
+            placeInfo.Foursquare.success = false;
+            populateInfoWindow(marker, placeInfo);
         }
     });
 }
 
-function getFoursquareDetails(results) {
-    // Call to Yelp Venue Details API
-    if (results.response.venues.length > 0) {
-        var venue_id = results.response.venues[0].id;
-        var url = "https://api.foursquare.com/v2/venues/" + venue_id;
-        var search_params = {
-            client_id: CLIENT_ID,
-            client_secret: CLIENT_SECRET,
-            v: VERSION
-        }
-        $.ajax({
-            dataType: "json",
-            url: url,
-            data: search_params,
-            success: function(results) {
-                results.successful = true;
-                return results;
-            },
-            error: function() {
-                return { successful: false };
-            }
-        });
-    } else {
-        return { successful: false };
+function getFoursquareDetails(marker, results, placeInfo) {
+    // Call to Foursquare Venue Details API
+    var venue_id = results.response.venues[0].id;
+    var url = "https://api.foursquare.com/v2/venues/" + venue_id;
+    var search_params = {
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        v: VERSION
     }
+    $.ajax({
+        dataType: "json",
+        url: url,
+        data: search_params,
+        success: function(results) {
+            if (results.meta.code == 200) {
+                placeInfo.Foursquare.success = true;
+                placeInfo.Foursquare.info = results.response.venue;
+            } else {
+                placeInfo.Foursquare.success = false;
+            }
+        },
+        error: function() {
+            placeInfo.Foursquare.success = false;
+        },
+        complete: function() {
+            // Populate info window with Google and Foursquare data
+            populateInfoWindow(marker, placeInfo);
+        }
+    });
 }
 
-function populateInfoWindow(googleInfo, yelpInfo, marker) {
+function populateInfoWindow(marker, placeInfo) {
     var innerHTML = '<div id="infoWindow">';
     // Photo, name, address, phone number
-    if (googleInfo.successful) {
-        if (googleInfo.photos) {
-            var srcURL = googleInfo.photos[0].getUrl({ maxHeight: 75, maxWidth: 75 });
+    if (placeInfo.Google.success) {
+        if (placeInfo.Google.info.photos) {
+            var srcURL = placeInfo.Google.info.photos[0].getUrl({ maxHeight: 75, maxWidth: 75 });
             innerHTML += '<img src="' + srcURL + '"><br>';
         }
-        if (googleInfo.name) {
-            innerHTML += '<strong>' + googleInfo.name + '</strong><br>';
+        if (placeInfo.Google.info.name) {
+            innerHTML += '<strong>' + placeInfo.Google.info.name + '</strong><br>';
         }
-        if (googleInfo.formatted_address) {
-            innerHTML += googleInfo.formatted_address + '<br>';
+        if (placeInfo.Google.info.formatted_address) {
+            innerHTML += placeInfo.Google.info.formatted_address + '<br>';
         }
-        if (googleInfo.formatted_phone_number) {
-            innerHTML += googleInfo.formatted_phone_number + '<br>';
+        if (placeInfo.Google.info.formatted_phone_number) {
+            innerHTML += placeInfo.Google.info.formatted_phone_number + '<br>';
         }
+        innerHTML += '<br>';
     } else {
-        innerHTML += "Call to Google Place Details API failed or returned no results.<br>";
+        innerHTML += "Call to Google Place Details API failed or returned no results.<br><br>";
     }
-    // Yelp rating info and link to Yelp business page
-    if (yelpInfo.successful) {
-        // star rating
-        var rating = yelpInfo.rating;
-        var main = Math.floor(rating / 1);
-        var num_string = main.toString();
-        if (rating - main > 0) {
-            num_string += "_half";
+    // Foursquare rating and link to Foursquare page
+    if (placeInfo.Foursquare.success) {
+        if (placeInfo.Foursquare.info.rating) {
+            var rating = placeInfo.Foursquare.info.rating;
+            innerHTML += '<div class="rating" style="background-color: #' + placeInfo.Foursquare.info.ratingColor + '">' + rating + '</div>';
+            innerHTML += 'Based on ' + placeInfo.Foursquare.info.ratingSignals + ' reviews<br>';
         }
-        var img_url = "small_" + num_string + ".png";
-        innerHTML += '<img src="img/stars/small/' + img_url + '">';
-        innerHTML += '<a href="' + yelpInfo.url + '"><img id=yelp-logo src="img/yelp_logo_tm/yelp.png"></a><br>';
-        innerHTML += yelpInfo.review_count + ' reviews';
+        if (placeInfo.Foursquare.info.canonicalUrl) {
+            innerHTML += '<a href="' + placeInfo.Foursquare.info.canonicalUrl + '">Link to Foursquare Site</a><br>';
+        }
     } else {
-        innerHTML += "Call to Yelp Business API failed or returned no results.<br>";
+        innerHTML += "Call to Foursquare Venue API failed or returned no results.<br>";
     }
     // Hours of operation
-    if (googleInfo.opening_hours) {
+    if (placeInfo.Google.info.opening_hours) {
         innerHTML += '<br><strong>Hours:</strong><br>';
         for (var i = 0; i < 7; i++) {
-            innerHTML += googleInfo.opening_hours.weekday_text[i] + '<br>';
+            innerHTML += placeInfo.Google.info.opening_hours.weekday_text[i] + '<br>';
         }
     }
     innerHTML += '</div>';
