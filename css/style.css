@@ -43,7 +43,7 @@ nav {
 }
 
 #closenav {
-    font-size: 42px;
+    font-size: 42px;sliver
     position: absolute;
     right: 0px;
     margin: 0 20px 0 0;
@@ -65,7 +65,7 @@ nav .button {
 #search {
     width: 100%;
     top: 60px;
-    margin-top: 60px;
+    margin-top: 20px;
 }
 
 #search p {
@@ -142,7 +142,7 @@ header {
 }
 
 #infoWindow {
-    width: 300px;
+    max-width: 300px;
 }
 
 .rating {

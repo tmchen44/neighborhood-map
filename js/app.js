@@ -37,15 +37,21 @@ function hideMarkers(markers) {
     setMapOnAll(markers, null);
 }
 
-function deleteSearchMarkers() {
+function deleteMarkers() {
     hideMarkers(searchMarkers);
     searchMarkers = [];
+}
+
+function clearSearch() {
+    deleteMarkers();
     document.getElementById("search-text").value = '';
 }
 
 function searchPlaces() {
     var bounds = map.getBounds();
-    var placesService = new google.maps.places.PlacesService(map)
+    var placesService = new google.maps.places.PlacesService(map);
+    infoWindow.close();
+    deleteMarkers();
     placesService.textSearch({
         query: document.getElementById("search-text").value,
         bounds: bounds
@@ -63,6 +69,7 @@ function createMarkers(markers, results) {
             position: result.geometry.location,
             map: map,
             title: result.name,
+            icon: "img/place_red.svg",
             details: {
                 id: result.place_id,
                 name: result.name,
@@ -73,10 +80,17 @@ function createMarkers(markers, results) {
             getPlaceDetails(this, infoWindow);
             var self = this;
             self.setAnimation(google.maps.Animation.BOUNCE);
+            self.setIcon('img/place_green.svg');
             setTimeout(function() {
                 self.setAnimation(null);
             }, 750);
         });
+        function closeCallback(marker) {
+            return function() {
+                marker.setIcon('img/place_red.svg');
+            }
+        }
+        infoWindow.addListener('closeclick', closeCallback(marker));
         markers.push(marker);
     }
 }
@@ -165,6 +179,7 @@ function getFoursquareDetails(marker, results, placeInfo) {
         },
         complete: function() {
             // Populate info window with Google and Foursquare data
+            // console.log(placeInfo);
             populateInfoWindow(marker, placeInfo);
         }
     });
