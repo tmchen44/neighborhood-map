@@ -1,18 +1,114 @@
 /*
- * Global variables
+ *  Knockout variables and functions
+ */
+
+// function Place(place_id, name, location, categories) {
+//     this.place_id = place_id;
+//     this.name = name;
+//     this.location = location;
+//     // set of category types
+//     this.categories = categories;
+// }
+
+function NavListViewModel() {
+    var self = this;
+    self.savedMarkers = ko.observableArray();
+    self.createSavedMarkers = function(places) {
+        for (var i = 0; i < places.length; i++) {
+            var place = places[i];
+            var marker = new google.maps.Marker({
+                position: place.location,
+                map: map,
+                title: place.name,
+                icon: "img/place_blue.svg",
+                details: {
+                    id: place.place_id,
+                    name: place.name,
+                    latlong: place.location.lat + ',' + place.location.lng,
+                    categories: place.categories
+                }
+            });
+            marker.addListener('click', function() {
+                if (infoWindow.marker != this) {
+                    getPlaceDetails(this);
+                    var self = this;
+                    self.setAnimation(google.maps.Animation.BOUNCE);
+                    // self.setIcon('img/place_green.svg');
+                    setTimeout(function() {
+                        self.setAnimation(null);
+                    }, 750);
+                }
+            });
+            marker.addListener('mouseover', function() {
+                this.setIcon('img/place_green.svg');
+            });
+            marker.addListener('mouseout', function() {
+                this.setIcon('img/place_blue.svg');
+            });
+            self.savedMarkers.push(marker);
+        }
+    }
+};
+
+
+/*
+ *  Google Map variables and functions
  */
 
 var CLIENT_ID = "UPFB0B0MOW5N3W5TJAXYO1MGZBBPXTRVYSYUE5Y5IYV0XHDL";
 var CLIENT_SECRET = "21VOTJQNGFB1UZ3HWWN4KTVZEECX0PNLZOWDZY4DHL4OR0Q4";
 var VERSION = "20180628";
 var map;
+var viewModel;
 var searchMarkers = [];
 var infoWindow;
-
-function toggleNav() {
-    var nav = document.querySelector("nav");
-    nav.classList.toggle("open");
-}
+var initialPlaces = [
+    {
+        name: "Cafe Mezzo",
+        location: {
+            lat: 37.8661626,
+            lng: -122.2587909
+        },
+        place_id: "ChIJEeIzp-F9hYARAb2PODOZ73k",
+        categories: new Set(["salad"])
+    },
+    {
+        name: "Thai Noodle II",
+        location: {
+            lat: 37.8663725,
+            lng: -122.2589573
+        },
+        place_id: "ChIJBQW82S58hYARkK4Bo_Y2a_M",
+        categories: new Set(["thai"])
+    },
+    {
+        name: "Sharetea",
+        location: {
+            lat: 37.8684568,
+            lng: -122.2603754
+        },
+        place_id: "ChIJ51-Rpyh8hYARnjjR-BpyrY8",
+        categories: new Set(["bubble", "tea"])
+    },
+    {
+        name: "Berkeley Bowl",
+        location: {
+            lat: 37.8570313,
+            lng: -122.2671869
+        },
+        place_id: "ChIJxRCJY4B-hYAR8pED77RBzRY",
+        categories: new Set(["supermarket"])
+    },
+    {
+        name: "Trader Joe's",
+        location: {
+            lat: 37.87173370000001,
+            lng: -122.2732356
+        },
+        place_id: "ChIJiZU6HZl-hYARndMsDjwIF0Y",
+        categories: new Set(["grocery", "store"])
+    }
+];
 
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
@@ -21,6 +117,14 @@ function initMap() {
         mapTypeControl: false
     });
     infoWindow = new google.maps.InfoWindow();
+    viewModel = new NavListViewModel();
+    ko.applyBindings(viewModel);
+    viewModel.createSavedMarkers(initialPlaces);
+}
+
+function toggleNav() {
+    var nav = document.querySelector("nav");
+    nav.classList.toggle("open");
 }
 
 function setMapOnAll(markers, map) {
@@ -42,7 +146,13 @@ function deleteMarkers() {
     searchMarkers = [];
 }
 
+function closeInfoWindow() {
+    infoWindow.setContent("");
+    infoWindow.close();
+}
+
 function clearSearch() {
+    closeInfoWindow();
     deleteMarkers();
     document.getElementById("search-text").value = '';
 }
@@ -50,19 +160,19 @@ function clearSearch() {
 function searchPlaces() {
     var bounds = map.getBounds();
     var placesService = new google.maps.places.PlacesService(map);
-    infoWindow.close();
+    closeInfoWindow();
     deleteMarkers();
     placesService.textSearch({
         query: document.getElementById("search-text").value,
         bounds: bounds
     }, function(results, status) {
         if (status == google.maps.places.PlacesServiceStatus.OK) {
-            createMarkers(searchMarkers, results);
+            createSearchMarkers(searchMarkers, results);
         }
     });
 }
 
-function createMarkers(markers, results) {
+function createSearchMarkers(markers, results) {
     for (var i = 0; i < results.length; i++) {
         var result = results[i];
         var marker = new google.maps.Marker({
@@ -77,25 +187,27 @@ function createMarkers(markers, results) {
             }
         });
         marker.addListener('click', function() {
-            getPlaceDetails(this, infoWindow);
-            var self = this;
-            self.setAnimation(google.maps.Animation.BOUNCE);
-            self.setIcon('img/place_green.svg');
-            setTimeout(function() {
-                self.setAnimation(null);
-            }, 750);
-        });
-        function closeCallback(marker) {
-            return function() {
-                marker.setIcon('img/place_red.svg');
+            if (infoWindow.marker != this) {
+                var self = this;
+                getPlaceDetails(this);
+                self.setAnimation(google.maps.Animation.BOUNCE);
+                // self.setIcon('img/place_green.svg');
+                setTimeout(function() {
+                    self.setAnimation(null);
+                }, 750);
             }
-        }
-        infoWindow.addListener('closeclick', closeCallback(marker));
+        });
+        marker.addListener('mouseover', function() {
+            this.setIcon('img/place_green.svg');
+        });
+        marker.addListener('mouseout', function() {
+            this.setIcon('img/place_red.svg');
+        });
         markers.push(marker);
     }
 }
 
-function getPlaceDetails(marker, infoWindow) {
+function getPlaceDetails(marker) {
     var service = new google.maps.places.PlacesService(map);
     // Callback from Places Details Service
     function googlePlacesCallback(place, status) {
@@ -179,13 +291,14 @@ function getFoursquareDetails(marker, results, placeInfo) {
         },
         complete: function() {
             // Populate info window with Google and Foursquare data
-            // console.log(placeInfo);
             populateInfoWindow(marker, placeInfo);
         }
     });
 }
 
 function populateInfoWindow(marker, placeInfo) {
+    infoWindow.setContent("");
+    infoWindow.marker = marker;
     var innerHTML = '<div id="infoWindow">';
     // Photo, name, address, phone number
     if (placeInfo.Google.success) {
@@ -226,9 +339,29 @@ function populateInfoWindow(marker, placeInfo) {
             innerHTML += placeInfo.Google.info.opening_hours.weekday_text[i] + '<br>';
         }
     }
+    // Save / Delete button
+    if (placeInfo.Google.success) {
+
+    }
     innerHTML += '</div>';
     infoWindow.setContent(innerHTML);
     infoWindow.open(map, marker);
+    function closeClickCallback(marker) {
+        return function() {
+            infoWindow.marker = null;
+            closeClickEvent.remove();
+        }
+    }
+    // function changedInfowindowCallback(marker) {
+    //     return function() {
+    //         marker.setIcon('img/place_blue.svg');
+    //         infoWindow.marker = null;
+    //         contentChangedEvent.remove();
+    //         closeClickEvent.remove();
+    //     }
+    // }
+    var closeClickEvent = infoWindow.addListener('closeclick', closeClickCallback(marker));
+    // var contentChangedEvent = infoWindow.addListener('content_changed', changedInfowindowCallback(marker));
 }
 
 /*
