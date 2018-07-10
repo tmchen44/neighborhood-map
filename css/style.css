@@ -13,6 +13,7 @@ body {
     margin: 0;
     width: 100vw;
     display: flex;
+    font-size: 0.9em;
 }
 
 hr {
@@ -43,7 +44,7 @@ nav {
 }
 
 #closenav {
-    font-size: 42px;sliver
+    font-size: 42px;
     position: absolute;
     right: 0px;
     margin: 0 20px 0 0;
@@ -105,7 +106,7 @@ nav .form {
 
 #search {
     top: 60px;
-    margin-top: 15px;
+    margin-top: 60px;
 }
 
 #list ul {
@@ -191,4 +192,25 @@ header {
     text-align: center;
     vertical-align: middle;
     color: white;
+}
+
+@media screen and (min-width: 1000px) {
+    body {
+        font-size: 1em;
+    }
+    nav {
+        z-index: 1;
+        transform: translate(0, 0);
+        position: static;
+        width: 350px;
+    }
+    #closenav {
+        visibility: hidden;
+    }
+    #opennav {
+        visibility: hidden;
+    }
+    main {
+        flex: 1;
+    }
 }
