@@ -19,7 +19,7 @@ hr {
     border: 0;
     height: 1px;
     background: #888;
-    margin: 15px 0 15px 0;
+    margin: 15px 0 5px 0;
 }
 
 /*
@@ -62,18 +62,11 @@ nav .button {
     cursor: pointer;
 }
 
-#search {
+nav .form {
     width: 100%;
-    top: 60px;
-    margin-top: 15px;
 }
 
-#search p {
-    padding-top: 15px;
-    margin: 0 0 7px 0;
-}
-
-#search-text {
+.text-input {
     font-size: 1em;
     width: 100%;
     padding: 7px 5px;
@@ -82,29 +75,66 @@ nav .button {
     margin-bottom: 10px;
 }
 
-#search .submit {
+.form p {
+    padding-top: 15px;
+    margin: 0 0 10px 0;
+}
+
+.submit {
     background-color: #3f9cff;
     color: white;
     border: 2px solid #3f9cff;
     margin-right: 5px;
 }
 
-#search .submit:hover {
+.submit:hover {
     background-color: #f7f7f7;
     color: #3f9cff;
 }
 
-#search .clear {
+.clear {
     background-color: #c4c4c4;
     color: white;
     border: 2px solid #c4c4c4;
 }
 
-#search .clear:hover {
+.clear:hover {
     background-color: #f7f7f7;
     color: #c4c4c4;
 }
 
+#search {
+    top: 60px;
+    margin-top: 15px;
+}
+
+#list ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+#list li {
+    padding: 20px 10px 20px 15px;
+}
+
+#list li:hover {
+    cursor: pointer;
+}
+
+#list p {
+    font-weight: 400;
+    margin: 0;
+    width: 70%;
+    display: inline-block;
+}
+
+.highlighted {
+    background-color: #7abaff;
+}
+
+.selected {
+    background-color: #7abaff;
+}
 
 /*
  *  Main area

@@ -2,18 +2,24 @@
  *  Knockout variables and functions
  */
 
-// function Place(place_id, name, location, categories) {
-//     this.place_id = place_id;
-//     this.name = name;
-//     this.location = location;
-//     // set of category types
-//     this.categories = categories;
-// }
+function Place(place_id, name, categories) {
+    this.place_id = place_id;
+    this.name = name;
+    // set of category types
+    this.categories = categories;
+    this.highlighted = ko.observable(false);
+    this.selected = ko.observable(false);
+    this.hidden = ko.observable(false);
+}
 
 function NavListViewModel() {
     var self = this;
-    self.savedMarkers = ko.observableArray();
-    self.createSavedMarkers = function(places) {
+    self.savedPlaces = ko.observableArray();
+    self.createSavedPlaces = function(places) {
+        places.forEach(function(place, index, array) {
+            savedPlace = new Place(place.place_id, place.name, place.categories);
+            self.savedPlaces.push(savedPlace);
+        });
         for (var i = 0; i < places.length; i++) {
             var place = places[i];
             var marker = new google.maps.Marker({
@@ -24,28 +30,54 @@ function NavListViewModel() {
                 details: {
                     id: place.place_id,
                     name: place.name,
-                    latlong: place.location.lat + ',' + place.location.lng,
-                    categories: place.categories
+                    latlong: place.location.lat + ',' + place.location.lng
                 }
             });
-            marker.addListener('click', function() {
-                if (infoWindow.marker != this) {
-                    getPlaceDetails(this);
-                    var self = this;
-                    self.setAnimation(google.maps.Animation.BOUNCE);
-                    // self.setIcon('img/place_green.svg');
-                    setTimeout(function() {
-                        self.setAnimation(null);
-                    }, 750);
+            marker.addListener('click', self.getMarkerDetails(marker.details.id));
+            marker.addListener('mouseover', self.highlightPlace(marker.details.id));
+            marker.addListener('mouseout', self.undoHighlightPlace(marker.details.id));
+            savedMarkers.set(marker.details.id, marker);
+        }
+    }
+    self.getMarkerDetails = function(place_id) {
+        return function() {
+            var marker = savedMarkers.get(place_id);
+            if (infoWindow.marker != marker) {
+                getPlaceDetails(marker);
+                marker.setAnimation(google.maps.Animation.BOUNCE);
+                setTimeout(function() {
+                    marker.setAnimation(null);
+                }, 750);
+                self.savedPlaces().forEach(function(place, index, array) {
+                    if (place.place_id === place_id) {
+                        place.selected(true);
+                    } else {
+                        place.selected(false);
+                    }
+                });
+            }
+        }
+    }
+    self.highlightPlace = function(place_id) {
+        return function() {
+            var marker = savedMarkers.get(place_id);
+            marker.setIcon('img/place_green.svg');
+            self.savedPlaces().forEach(function(place, index, array) {
+                if (place.place_id === place_id) {
+                    place.highlighted(true);
                 }
             });
-            marker.addListener('mouseover', function() {
-                this.setIcon('img/place_green.svg');
+        }
+    }
+    self.undoHighlightPlace = function(place_id) {
+        return function() {
+            var marker = savedMarkers.get(place_id);
+            marker.setIcon('img/place_blue.svg');
+            self.savedPlaces().forEach(function(place, index, array) {
+                if (place.place_id === place_id) {
+                    place.highlighted(false);
+                }
             });
-            marker.addListener('mouseout', function() {
-                this.setIcon('img/place_blue.svg');
-            });
-            self.savedMarkers.push(marker);
         }
     }
 };
@@ -56,11 +88,12 @@ function NavListViewModel() {
  */
 
 var CLIENT_ID = "UPFB0B0MOW5N3W5TJAXYO1MGZBBPXTRVYSYUE5Y5IYV0XHDL";
-var CLIENT_SECRET = "21VOTJQNGFB1UZ3HWWN4KTVZEECX0PNLZOWDZY4DHL4OR0Q4";
+var CLIENT_SECRET = "21VOTJQNGFB1UZ3HWWN4KTVZEECX0PNLZOWDZY4DHL4OR0Q4_remove";
 var VERSION = "20180628";
 var map;
 var viewModel;
 var searchMarkers = [];
+var savedMarkers = new Map();
 var infoWindow;
 var initialPlaces = [
     {
@@ -119,7 +152,7 @@ function initMap() {
     infoWindow = new google.maps.InfoWindow();
     viewModel = new NavListViewModel();
     ko.applyBindings(viewModel);
-    viewModel.createSavedMarkers(initialPlaces);
+    viewModel.createSavedPlaces(initialPlaces);
 }
 
 function toggleNav() {
@@ -350,6 +383,9 @@ function populateInfoWindow(marker, placeInfo) {
         return function() {
             infoWindow.marker = null;
             closeClickEvent.remove();
+            viewModel.savedPlaces().forEach(function(place, index, array) {
+                place.selected(false);
+            });
         }
     }
     // function changedInfowindowCallback(marker) {

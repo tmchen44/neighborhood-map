@@ -9,14 +9,31 @@
 <body>
     <nav>
         <span id="closenav" onclick="toggleNav()">&times;</span>
-        <div id="search">
+        <div id="search" class="form">
             <p>Search for a place:</p>
-            <input id="search-text" type="text" placeholder="e.g. Pizza on North Side">
+            <input id="search-text" class="text-input" type="text" placeholder="e.g. Pizza on North Side">
             <input id="search-submit" class="button submit" type="button" onclick="searchPlaces()" value="Search">
             <input class="button clear" type="button" onclick="clearSearch()" value="Clear">
         </div>
         <hr>
-        <div id="list"></div>
+        <div id="filter" class="form">
+            <p>Filter saved places by name or category:</p>
+            <input id="filter-text" class="text-input" type="text" placeholder="e.g. Sharetea or supermarket">
+            <input id="filter-submit" class="button submit" type="button" onclick="filterPlaces()" value="Filter">
+            <input class="button clear" type="button" onclick="showAllPlaces()" value="Clear">
+        </div>
+        <hr>
+        <div id="list">
+            <ul data-bind="foreach: savedPlaces">
+                <li data-bind="event: { mouseover: $root.highlightPlace(place_id),
+                                        mouseout: $root.undoHighlightPlace(place_id),
+                                        click: $root.getMarkerDetails(place_id) },
+                               css: { highlighted: highlighted() === true,
+                                      selected: selected() === true }">
+                    <p data-bind="text: name"></p>
+                </li>
+            </ul>
+        </div>
     </nav>
     <main>
         <header>
