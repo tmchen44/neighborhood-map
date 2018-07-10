@@ -3,13 +3,23 @@
  */
 
 function Place(place_id, name, categories) {
-    this.place_id = place_id;
-    this.name = name;
+    var self = this;
+    self.place_id = place_id;
+    self.name = name;
     // set of category types
-    this.categories = categories;
-    this.highlighted = ko.observable(false);
-    this.selected = ko.observable(false);
-    this.hidden = ko.observable(false);
+    self.categories = categories;
+    self.categoryString = "";
+    var myArr = Array.from(categories).forEach(function(category, index, array) {
+        if (index < array.length - 1) {
+            self.categoryString += category + ", ";
+        } else {
+            self.categoryString += category;
+        }
+    });
+    self.highlighted = ko.observable(false);
+    self.selected = ko.observable(false);
+    self.show = ko.observable(true);
+    console.log(self.categoryString);
 }
 
 function NavListViewModel() {
@@ -48,7 +58,7 @@ function NavListViewModel() {
                 setTimeout(function() {
                     marker.setAnimation(null);
                 }, 750);
-                self.savedPlaces().forEach(function(place, index, array) {
+                self.savedPlaces().forEach(function(place) {
                     if (place.place_id === place_id) {
                         place.selected(true);
                     } else {
@@ -62,7 +72,7 @@ function NavListViewModel() {
         return function() {
             var marker = savedMarkers.get(place_id);
             marker.setIcon('img/place_green.svg');
-            self.savedPlaces().forEach(function(place, index, array) {
+            self.savedPlaces().forEach(function(place) {
                 if (place.place_id === place_id) {
                     place.highlighted(true);
                 }
@@ -73,15 +83,45 @@ function NavListViewModel() {
         return function() {
             var marker = savedMarkers.get(place_id);
             marker.setIcon('img/place_blue.svg');
-            self.savedPlaces().forEach(function(place, index, array) {
+            self.savedPlaces().forEach(function(place) {
                 if (place.place_id === place_id) {
                     place.highlighted(false);
                 }
             });
         }
     }
+    self.filterPlaces = function() {
+        closeInfoWindow();
+        queryString = document.getElementById("filter-text").value.toLowerCase();
+        if (queryString == "") {
+            self.showAllPlaces();
+            return;
+        }
+        var queryTerms = [queryString];
+        queryString.split(" ").forEach(function(word) {
+            queryTerms.push(word);
+        });
+        self.savedPlaces().forEach(function(place) {
+            place.show(false);
+            savedMarkers.get(place.place_id).setMap(null);
+        });
+        queryTerms.forEach(function(query) {
+            self.savedPlaces().forEach(function(place) {
+                if (place.name.toLowerCase() === query || place.categories.has(query)) {
+                    place.show(true);
+                    savedMarkers.get(place.place_id).setMap(map);
+                }
+            });
+        });
+    }
+    self.showAllPlaces = function() {
+        closeInfoWindow();
+        self.savedPlaces().forEach(function(place) {
+            place.show(true);
+            savedMarkers.get(place.place_id).setMap(map);
+        });
+    }
 };
-
 
 /*
  *  Google Map variables and functions
@@ -103,7 +143,7 @@ var initialPlaces = [
             lng: -122.2587909
         },
         place_id: "ChIJEeIzp-F9hYARAb2PODOZ73k",
-        categories: new Set(["salad"])
+        categories: new Set(["salad", "restaurant"])
     },
     {
         name: "Thai Noodle II",
@@ -112,7 +152,7 @@ var initialPlaces = [
             lng: -122.2589573
         },
         place_id: "ChIJBQW82S58hYARkK4Bo_Y2a_M",
-        categories: new Set(["thai"])
+        categories: new Set(["thai", "restaurant", "noodles"])
     },
     {
         name: "Sharetea",
@@ -121,7 +161,7 @@ var initialPlaces = [
             lng: -122.2603754
         },
         place_id: "ChIJ51-Rpyh8hYARnjjR-BpyrY8",
-        categories: new Set(["bubble", "tea"])
+        categories: new Set(["tea", "boba"])
     },
     {
         name: "Berkeley Bowl",
@@ -130,7 +170,7 @@ var initialPlaces = [
             lng: -122.2671869
         },
         place_id: "ChIJxRCJY4B-hYAR8pED77RBzRY",
-        categories: new Set(["supermarket"])
+        categories: new Set(["supermarket", "groceries"])
     },
     {
         name: "Trader Joe's",
@@ -139,7 +179,7 @@ var initialPlaces = [
             lng: -122.2732356
         },
         place_id: "ChIJiZU6HZl-hYARndMsDjwIF0Y",
-        categories: new Set(["grocery", "store"])
+        categories: new Set(["groceries", "supermarket"])
     }
 ];
 
@@ -182,6 +222,9 @@ function deleteMarkers() {
 function closeInfoWindow() {
     infoWindow.setContent("");
     infoWindow.close();
+    viewModel.savedPlaces().forEach(function(place) {
+        place.selected(false);
+    });
 }
 
 function clearSearch() {
@@ -372,10 +415,6 @@ function populateInfoWindow(marker, placeInfo) {
             innerHTML += placeInfo.Google.info.opening_hours.weekday_text[i] + '<br>';
         }
     }
-    // Save / Delete button
-    if (placeInfo.Google.success) {
-
-    }
     innerHTML += '</div>';
     infoWindow.setContent(innerHTML);
     infoWindow.open(map, marker);
@@ -383,21 +422,12 @@ function populateInfoWindow(marker, placeInfo) {
         return function() {
             infoWindow.marker = null;
             closeClickEvent.remove();
-            viewModel.savedPlaces().forEach(function(place, index, array) {
+            viewModel.savedPlaces().forEach(function(place) {
                 place.selected(false);
             });
         }
     }
-    // function changedInfowindowCallback(marker) {
-    //     return function() {
-    //         marker.setIcon('img/place_blue.svg');
-    //         infoWindow.marker = null;
-    //         contentChangedEvent.remove();
-    //         closeClickEvent.remove();
-    //     }
-    // }
     var closeClickEvent = infoWindow.addListener('closeclick', closeClickCallback(marker));
-    // var contentChangedEvent = infoWindow.addListener('content_changed', changedInfowindowCallback(marker));
 }
 
 /*
@@ -407,5 +437,11 @@ function populateInfoWindow(marker, placeInfo) {
 $("#search-text").keyup(function(event) {
     if (event.keyCode === 13) {
         $("#search-submit").click();
+    }
+});
+
+$("#filter-text").keyup(function(event) {
+    if (event.keyCode === 13) {
+        $("#filter-submit").click();
     }
 });

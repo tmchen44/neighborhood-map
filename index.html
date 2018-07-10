@@ -19,8 +19,8 @@
         <div id="filter" class="form">
             <p>Filter saved places by name or category:</p>
             <input id="filter-text" class="text-input" type="text" placeholder="e.g. Sharetea or supermarket">
-            <input id="filter-submit" class="button submit" type="button" onclick="filterPlaces()" value="Filter">
-            <input class="button clear" type="button" onclick="showAllPlaces()" value="Clear">
+            <input id="filter-submit" class="button submit" type="button" data-bind="click: filterPlaces" value="Filter">
+            <input class="button clear" type="button" data-bind="click: showAllPlaces" value="Clear">
         </div>
         <hr>
         <div id="list">
@@ -29,8 +29,10 @@
                                         mouseout: $root.undoHighlightPlace(place_id),
                                         click: $root.getMarkerDetails(place_id) },
                                css: { highlighted: highlighted() === true,
-                                      selected: selected() === true }">
-                    <p data-bind="text: name"></p>
+                                      selected: selected() === true },
+                               visible: show">
+                    <p id="list-name" data-bind="text: name"></p>
+                    <p id="list-categories" data-bind="text: categoryString"></p>
                 </li>
             </ul>
         </div>
