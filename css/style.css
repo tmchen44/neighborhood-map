@@ -116,17 +116,30 @@ nav .form {
 
 #list li {
     padding: 20px 10px 20px 15px;
+    display: flex;
+    align-items: center;
 }
 
 #list li:hover {
     cursor: pointer;
 }
 
+.highlighted {
+    background-color: #8cc3ff;
+}
+
+.selected {
+    background-color: #8cc3ff;
+}
+
+#list .list-text {
+    flex: 1;
+}
+
 #list-name {
     font-weight: 400;
     margin: 0;
     width: 70%;
-    display: inline-block;
 }
 
 #list-categories {
@@ -135,12 +148,15 @@ nav .form {
     margin: 0.2em 0 0 1em;
 }
 
-.highlighted {
-    background-color: #7abaff;
+#delete-place {
+    font-size: 30px;
+    color: #909090;
+    margin: 0 5px 0 10px;
 }
 
-.selected {
-    background-color: #7abaff;
+#delete-place:hover {
+    cursor: pointer;
+    color: red;
 }
 
 /*

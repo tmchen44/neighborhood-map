@@ -39,6 +39,12 @@ function NavListViewModel() {
             self.savedPlaces.push(marker);
         }
     }
+    self.deletePlace = function(marker) {
+        return function() {
+            marker.setMap(null);
+            self.savedPlaces.remove(marker);
+        }
+    }
     self.getMarkerDetails = function(marker) {
         return function() {
             if (infoWindow.marker != marker) {
@@ -101,7 +107,7 @@ function NavListViewModel() {
  */
 
 const CLIENT_ID = "UPFB0B0MOW5N3W5TJAXYO1MGZBBPXTRVYSYUE5Y5IYV0XHDL";
-const CLIENT_SECRET = "21VOTJQNGFB1UZ3HWWN4KTVZEECX0PNLZOWDZY4DHL4OR0Q4";
+const CLIENT_SECRET = "21VOTJQNGFB1UZ3HWWN4KTVZEECX0PNLZOWDZY4DHL4OR0Q4_remove";
 const VERSION = "20180628";
 var EMPTY_MARKER;
 var map;
@@ -152,7 +158,7 @@ var initialPlaces = [
             lng: -122.2732356
         },
         place_id: "ChIJiZU6HZl-hYARndMsDjwIF0Y",
-        categories: new Set(["groceries", "supermarket"])
+        categories: new Set(["supermarket", "groceries"])
     }
 ];
 
