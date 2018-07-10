@@ -2,36 +2,20 @@
  *  Knockout variables and functions
  */
 
-function Place(place_id, name, categories) {
-    var self = this;
-    self.place_id = place_id;
-    self.name = name;
-    // set of category types
-    self.categories = categories;
-    self.categoryString = "";
-    var myArr = Array.from(categories).forEach(function(category, index, array) {
-        if (index < array.length - 1) {
-            self.categoryString += category + ", ";
-        } else {
-            self.categoryString += category;
-        }
-    });
-    self.highlighted = ko.observable(false);
-    self.selected = ko.observable(false);
-    self.show = ko.observable(true);
-    console.log(self.categoryString);
-}
-
 function NavListViewModel() {
     var self = this;
     self.savedPlaces = ko.observableArray();
     self.createSavedPlaces = function(places) {
-        places.forEach(function(place, index, array) {
-            savedPlace = new Place(place.place_id, place.name, place.categories);
-            self.savedPlaces.push(savedPlace);
-        });
         for (var i = 0; i < places.length; i++) {
             var place = places[i];
+            var catString = "";
+            Array.from(place.categories).forEach(function(category, index, array) {
+                if (index < array.length - 1) {
+                    catString += category + ", ";
+                } else {
+                    catString += category;
+                }
+            });
             var marker = new google.maps.Marker({
                 position: place.location,
                 map: map,
@@ -40,54 +24,43 @@ function NavListViewModel() {
                 details: {
                     id: place.place_id,
                     name: place.name,
-                    latlong: place.location.lat + ',' + place.location.lng
+                    latlong: place.location.lat + ',' + place.location.lng,
+                    categories: place.categories,
+                    categoryString: catString,
+                    highlighted: ko.observable(false),
+                    selected: ko.observable(false),
+                    show: ko.observable(true),
+                    saved: true
                 }
             });
-            marker.addListener('click', self.getMarkerDetails(marker.details.id));
-            marker.addListener('mouseover', self.highlightPlace(marker.details.id));
-            marker.addListener('mouseout', self.undoHighlightPlace(marker.details.id));
-            savedMarkers.set(marker.details.id, marker);
+            marker.addListener('click', self.getMarkerDetails(marker));
+            marker.addListener('mouseover', self.highlightPlace(marker));
+            marker.addListener('mouseout', self.undoHighlightPlace(marker));
+            self.savedPlaces.push(marker);
         }
     }
-    self.getMarkerDetails = function(place_id) {
+    self.getMarkerDetails = function(marker) {
         return function() {
-            var marker = savedMarkers.get(place_id);
             if (infoWindow.marker != marker) {
                 getPlaceDetails(marker);
                 marker.setAnimation(google.maps.Animation.BOUNCE);
                 setTimeout(function() {
                     marker.setAnimation(null);
                 }, 750);
-                self.savedPlaces().forEach(function(place) {
-                    if (place.place_id === place_id) {
-                        place.selected(true);
-                    } else {
-                        place.selected(false);
-                    }
-                });
+                marker.details.selected(true);
             }
         }
     }
-    self.highlightPlace = function(place_id) {
+    self.highlightPlace = function(marker) {
         return function() {
-            var marker = savedMarkers.get(place_id);
             marker.setIcon('img/place_green.svg');
-            self.savedPlaces().forEach(function(place) {
-                if (place.place_id === place_id) {
-                    place.highlighted(true);
-                }
-            });
+            marker.details.highlighted(true);
         }
     }
-    self.undoHighlightPlace = function(place_id) {
+    self.undoHighlightPlace = function(marker) {
         return function() {
-            var marker = savedMarkers.get(place_id);
             marker.setIcon('img/place_blue.svg');
-            self.savedPlaces().forEach(function(place) {
-                if (place.place_id === place_id) {
-                    place.highlighted(false);
-                }
-            });
+            marker.details.highlighted(false);
         }
     }
     self.filterPlaces = function() {
@@ -101,24 +74,24 @@ function NavListViewModel() {
         queryString.split(" ").forEach(function(word) {
             queryTerms.push(word);
         });
-        self.savedPlaces().forEach(function(place) {
-            place.show(false);
-            savedMarkers.get(place.place_id).setMap(null);
+        self.savedPlaces().forEach(function(marker) {
+            marker.details.show(false);
+            marker.setMap(null);
         });
         queryTerms.forEach(function(query) {
-            self.savedPlaces().forEach(function(place) {
-                if (place.name.toLowerCase() === query || place.categories.has(query)) {
-                    place.show(true);
-                    savedMarkers.get(place.place_id).setMap(map);
+            self.savedPlaces().forEach(function(marker) {
+                if (marker.details.name.toLowerCase() === query || marker.details.categories.has(query)) {
+                    marker.details.show(true);
+                    marker.setMap(map);
                 }
             });
         });
     }
     self.showAllPlaces = function() {
         closeInfoWindow();
-        self.savedPlaces().forEach(function(place) {
-            place.show(true);
-            savedMarkers.get(place.place_id).setMap(map);
+        self.savedPlaces().forEach(function(marker) {
+            marker.details.show(true);
+            marker.setMap(map);
         });
     }
 };
@@ -127,13 +100,13 @@ function NavListViewModel() {
  *  Google Map variables and functions
  */
 
-var CLIENT_ID = "UPFB0B0MOW5N3W5TJAXYO1MGZBBPXTRVYSYUE5Y5IYV0XHDL";
-var CLIENT_SECRET = "21VOTJQNGFB1UZ3HWWN4KTVZEECX0PNLZOWDZY4DHL4OR0Q4";
-var VERSION = "20180628";
+const CLIENT_ID = "UPFB0B0MOW5N3W5TJAXYO1MGZBBPXTRVYSYUE5Y5IYV0XHDL";
+const CLIENT_SECRET = "21VOTJQNGFB1UZ3HWWN4KTVZEECX0PNLZOWDZY4DHL4OR0Q4";
+const VERSION = "20180628";
+var EMPTY_MARKER;
 var map;
 var viewModel;
 var searchMarkers = [];
-var savedMarkers = new Map();
 var infoWindow;
 var initialPlaces = [
     {
@@ -190,6 +163,19 @@ function initMap() {
         mapTypeControl: false
     });
     infoWindow = new google.maps.InfoWindow();
+    EMPTY_MARKER = new google.maps.Marker({
+        position: null,
+        map: null,
+        title: "null",
+        icon: "img/place_red.svg",
+        details: {
+            id: null,
+            name: null,
+            latlong: null,
+            saved: false
+        }
+    });
+    infoWindow.marker = EMPTY_MARKER;
     viewModel = new NavListViewModel();
     ko.applyBindings(viewModel);
     viewModel.createSavedPlaces(initialPlaces);
@@ -220,11 +206,11 @@ function deleteMarkers() {
 }
 
 function closeInfoWindow() {
-    infoWindow.setContent("");
     infoWindow.close();
-    viewModel.savedPlaces().forEach(function(place) {
-        place.selected(false);
-    });
+    if (infoWindow.marker.details.saved === true) {
+        infoWindow.marker.details.selected(false);
+    }
+    infoWindow.marker = EMPTY_MARKER;
 }
 
 function clearSearch() {
@@ -259,7 +245,8 @@ function createSearchMarkers(markers, results) {
             details: {
                 id: result.place_id,
                 name: result.name,
-                latlong: result.geometry.location.lat() + ',' + result.geometry.location.lng()
+                latlong: result.geometry.location.lat() + ',' + result.geometry.location.lng(),
+                saved: false
             }
         });
         marker.addListener('click', function() {
@@ -373,7 +360,7 @@ function getFoursquareDetails(marker, results, placeInfo) {
 }
 
 function populateInfoWindow(marker, placeInfo) {
-    infoWindow.setContent("");
+    closeInfoWindow();
     infoWindow.marker = marker;
     var innerHTML = '<div id="infoWindow">';
     // Photo, name, address, phone number
@@ -420,11 +407,8 @@ function populateInfoWindow(marker, placeInfo) {
     infoWindow.open(map, marker);
     function closeClickCallback(marker) {
         return function() {
-            infoWindow.marker = null;
+            closeInfoWindow();
             closeClickEvent.remove();
-            viewModel.savedPlaces().forEach(function(place) {
-                place.selected(false);
-            });
         }
     }
     var closeClickEvent = infoWindow.addListener('closeclick', closeClickCallback(marker));

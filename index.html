@@ -25,14 +25,14 @@
         <hr>
         <div id="list">
             <ul data-bind="foreach: savedPlaces">
-                <li data-bind="event: { mouseover: $root.highlightPlace(place_id),
-                                        mouseout: $root.undoHighlightPlace(place_id),
-                                        click: $root.getMarkerDetails(place_id) },
-                               css: { highlighted: highlighted() === true,
-                                      selected: selected() === true },
-                               visible: show">
-                    <p id="list-name" data-bind="text: name"></p>
-                    <p id="list-categories" data-bind="text: categoryString"></p>
+                <li data-bind="event: { mouseover: $root.highlightPlace($data),
+                                        mouseout: $root.undoHighlightPlace($data),
+                                        click: $root.getMarkerDetails($data) },
+                               css: { highlighted: details.highlighted() === true,
+                                      selected: details.selected() === true },
+                               visible: details.show()">
+                    <p id="list-name" data-bind="text: details.name"></p>
+                    <p id="list-categories" data-bind="text: details.categoryString"></p>
                 </li>
             </ul>
         </div>
