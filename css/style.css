@@ -109,6 +109,10 @@ nav .form {
     margin-top: 60px;
 }
 
+#list {
+    overflow: auto;
+}
+
 #list ul {
     list-style-type: none;
     padding: 0;
@@ -208,6 +212,20 @@ header {
     text-align: center;
     vertical-align: middle;
     color: white;
+}
+
+#save-place {
+    background-color: #3f9cff;
+    color: white;
+    border: 2px solid #3f9cff;
+    border-radius: 5px;
+    padding: 5px 8px;
+    cursor: pointer;
+}
+
+#save-place:disabled {
+    opacity: 0.6;
+    cursor: default;
 }
 
 @media screen and (min-width: 1000px) {

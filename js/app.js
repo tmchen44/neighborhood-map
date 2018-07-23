@@ -5,6 +5,7 @@
 function NavListViewModel() {
     var self = this;
     self.savedPlaces = ko.observableArray();
+    self.savedSet = new Set();
     self.createSavedPlaces = function(places) {
         for (var i = 0; i < places.length; i++) {
             var place = places[i];
@@ -37,12 +38,18 @@ function NavListViewModel() {
             marker.addListener('mouseover', self.highlightPlace(marker));
             marker.addListener('mouseout', self.undoHighlightPlace(marker));
             self.savedPlaces.push(marker);
+            self.savedSet.add(marker.details.id);
         }
     }
     self.deletePlace = function(marker) {
         return function() {
             marker.setMap(null);
             self.savedPlaces.remove(marker);
+            self.savedSet.delete(marker.details.id);
+            if (infoWindow.marker != marker && infoWindow.marker.details.id === marker.details.id) {
+                document.getElementById("save-place").disabled = false;
+                document.getElementById("save-place").value = "Save";
+            }
         }
     }
     self.getMarkerDetails = function(marker) {
@@ -185,6 +192,13 @@ function initMap() {
     viewModel = new NavListViewModel();
     ko.applyBindings(viewModel);
     viewModel.createSavedPlaces(initialPlaces);
+    setListHeight();
+}
+
+function setListHeight() {
+    var totalHeight = $("nav").height();
+    var otherHeight = $("#search").outerHeight(true) + $("hr").outerHeight(true) * 2 + $("#filter").outerHeight(true);
+    $("#list").height(totalHeight - otherHeight);
 }
 
 function toggleNav() {
@@ -408,16 +422,48 @@ function populateInfoWindow(marker, placeInfo) {
             innerHTML += placeInfo.Google.info.opening_hours.weekday_text[i] + '<br>';
         }
     }
+    // Save place button
+    innerHTML += '<br><input type="button" id="save-place" ';
+    if (!viewModel.savedSet.has(marker.details.id)) {
+        innerHTML += 'value="Save">';
+    } else {
+        innerHTML += 'disabled value="Saved">';
+    }
+
     innerHTML += '</div>';
     infoWindow.setContent(innerHTML);
     infoWindow.open(map, marker);
-    function closeClickCallback(marker) {
+    document.getElementById("save-place").onclick = addSavedPlace();
+    function addSavedPlace() {
+        return function() {
+            place = {
+                name: marker.details.name,
+                location: {
+                    lat: marker.position.lat(),
+                    lng: marker.position.lng()
+                },
+                place_id: marker.details.id,
+                categories: new Set()
+            };
+            if (placeInfo.Foursquare.success) {
+                placeInfo.Foursquare.info.categories.forEach(function(category) {
+                    category.name.toLowerCase().split(" ").forEach(function(word) {
+                        place.categories.add(word);
+                    });
+                });
+            }
+            viewModel.createSavedPlaces([place]);
+            document.getElementById("save-place").disabled = true;
+            document.getElementById("save-place").value = "Saved";
+        }
+    }
+    function closeClickCallback() {
         return function() {
             closeInfoWindow();
             closeClickEvent.remove();
         }
     }
-    var closeClickEvent = infoWindow.addListener('closeclick', closeClickCallback(marker));
+    var closeClickEvent = infoWindow.addListener('closeclick', closeClickCallback());
 }
 
 /*
