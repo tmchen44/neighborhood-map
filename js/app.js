@@ -114,60 +114,13 @@ function NavListViewModel() {
  */
 
 const CLIENT_ID = "UPFB0B0MOW5N3W5TJAXYO1MGZBBPXTRVYSYUE5Y5IYV0XHDL";
-const CLIENT_SECRET = "21VOTJQNGFB1UZ3HWWN4KTVZEECX0PNLZOWDZY4DHL4OR0Q4_remove";
+const CLIENT_SECRET = "21VOTJQNGFB1UZ3HWWN4KTVZEECX0PNLZOWDZY4DHL4OR0Q4";
 const VERSION = "20180628";
 var EMPTY_MARKER;
 var map;
 var viewModel;
 var searchMarkers = [];
 var infoWindow;
-var initialPlaces = [
-    {
-        name: "Cafe Mezzo",
-        location: {
-            lat: 37.8661626,
-            lng: -122.2587909
-        },
-        place_id: "ChIJEeIzp-F9hYARAb2PODOZ73k",
-        categories: new Set(["salad", "restaurant"])
-    },
-    {
-        name: "Thai Noodle II",
-        location: {
-            lat: 37.8663725,
-            lng: -122.2589573
-        },
-        place_id: "ChIJBQW82S58hYARkK4Bo_Y2a_M",
-        categories: new Set(["thai", "restaurant", "noodles"])
-    },
-    {
-        name: "Sharetea",
-        location: {
-            lat: 37.8684568,
-            lng: -122.2603754
-        },
-        place_id: "ChIJ51-Rpyh8hYARnjjR-BpyrY8",
-        categories: new Set(["tea", "boba"])
-    },
-    {
-        name: "Berkeley Bowl",
-        location: {
-            lat: 37.8570313,
-            lng: -122.2671869
-        },
-        place_id: "ChIJxRCJY4B-hYAR8pED77RBzRY",
-        categories: new Set(["supermarket", "groceries"])
-    },
-    {
-        name: "Trader Joe's",
-        location: {
-            lat: 37.87173370000001,
-            lng: -122.2732356
-        },
-        place_id: "ChIJiZU6HZl-hYARndMsDjwIF0Y",
-        categories: new Set(["supermarket", "groceries"])
-    }
-];
 
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
@@ -191,7 +144,6 @@ function initMap() {
     infoWindow.marker = EMPTY_MARKER;
     viewModel = new NavListViewModel();
     ko.applyBindings(viewModel);
-    viewModel.createSavedPlaces(initialPlaces);
     setListHeight();
 }
 
